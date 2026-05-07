@@ -1,0 +1,1 @@
+HWP extraction error: not an OLE2 structured storage file

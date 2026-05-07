@@ -1,0 +1,10 @@
+.env
+*.pickle
+token.json
+credentials.json
+__pycache__/
+.streamlit/
+images/
+*.docx
+*.md
+!implementation_plan.md
