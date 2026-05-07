@@ -23,11 +23,10 @@ def load_anchor_data():
             pass
     return "\n\n---\n\n".join(all_texts), len(txt_files)
 
-def fetch_news_data():
-    """실무 키워드 중 랜덤 3개로 구글 뉴스 RSS 수집"""
+def fetch_news_data(keywords=None):
+    """실무 키워드 중 랜덤 3개로 구글 뉴스 RSS 수집 (keywords 인자는 호환성을 위해 유지)"""
     news_dict = scrape_all_keywords(n_random=3)
     formatted = format_news_for_prompt(news_dict)
-    total = sum(len(v) for v in news_dict.values())
     return formatted
 
 # ─────────────────────────────────────────────
