@@ -3,15 +3,17 @@ import pickle
 import re
 import base64
 import json
+from dotenv import load_dotenv
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from google.auth.transport.requests import Request
 
 class BloggerPublisher:
-    def __init__(self, headless=True):
+    def __init__(self):
         """
         공식 Google Blogger API v3를 사용하는 퍼블리셔입니다.
         """
+        load_dotenv(override=True)
         # 환경 변수에서 먼저 읽기
         self.blog_id = os.getenv("BLOGGER_BLOG_ID", "")
         
@@ -31,7 +33,6 @@ class BloggerPublisher:
             self.blog_id = match.group(1)
             
         self.service = None
-        self.headless = headless
 
     def log(self, msg):
         print(f"[BloggerPublisher] {msg}")
