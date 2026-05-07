@@ -18,67 +18,6 @@ from openai import OpenAI
 from docx import Document
 from docx.shared import Pt
 from docx.enum.text import WD_ALIGN_PARAGRAPH
-
-def call_llama_for_topics(anchor_text: str, news_text: str) -> dict:
-    """
-    NVIDIA Llama 3 70B 모델로 시험 4개 + 실무 2개 등 6개 주제 생성.
-    반환: {"exam": ["주제1",...], "field": ["주제5","주제6"]}
-    """
-    from litellm import completion
-    import os
-    import json
-    import re
-
-    system_prompt = """Role: 당신은 10년차 전문 파워블로거이자 건설사 공무 출신으로 현재 토목건설 계약 및 감독 실무를 총괄하는 현직 공무원입니다.
-Goal: 기출문제 데이터와 뉴스 텍스트를 조합하여, 수험생과 실무자 모두가 흥미를 느낄 수 있는 아주 전문적이고 유용한 블로그 주제 6개를 제안하세요.
-
-규칙:
-1. "exam" 은 기출문제 기반 시험 정보 주제 4개 (토목기사/토목시공기술사/토질및기초기술사 중 하나를 말머리에 태그)
-2. "field" 는 최신 실무 뉴스 기반 현장 가이드 주제 2개 (실무 가이드 태그 붙임)
-3. 각 주제는 블로그 제목으로 바로 쓰기에 손색없도록 구체적이고 매력적이어야 함
-4. 반드시 아래 JSON 형식으로만 응답 (다른 텍스트 금지):
-
-{
-  "exam": [
-    "(토목기사) 주제1",
-    "(토목시공기술사) 주제2",
-    "(토질및기초기술사) 주제3",
-    "(토목기사) 주제4"
-  ],
-  "field": [
-    "(실무가이드) 주제5",
-    "(실무가이드) 주제6"
-  ]
-}"""
-
-    user_prompt = f"【기출문제 데이터】\n{anchor_text[:6000]}\n\n【최신 실무 뉴스】\n{news_text[:2000]}\n\n위 데이터를 종합하여 시험 주제 4개 + 실무 주제 2개를 JSON으로 응답하세요."
-
-    kwargs = {
-        "model": "openai/meta/llama-3.1-70b-instruct",
-        "api_base": "https://integrate.api.nvidia.com/v1",
-        "api_key": os.getenv("NVIDIA_API_KEY", ""),
-        "messages": [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_prompt},
-        ],
-        "temperature": 0.8,
-        "max_tokens": 1500,
-    }
-
-    try:
-        response = completion(**kwargs)
-        raw = response.choices[0].message.content.strip()
-        match = re.search(r"(\{.*?\})", raw, re.DOTALL)
-        if match:
-            raw = match.group(1)
-        parsed = json.loads(raw)
-    except Exception as e:
-        print(f"Error in call_llama_for_topics: {e}")
-        parsed = {"exam": ["(토목시공기술사) 건설 공정관리 기초"], "field": ["(실무가이드) 안전보건관리비 정산"]}
-    
-    if "exam" not in parsed: parsed["exam"] = []
-    if "field" not in parsed: parsed["field"] = []
-    return parsed
 from dotenv import load_dotenv
 
 load_dotenv(override=True)
