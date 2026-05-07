@@ -64,36 +64,36 @@ def md_to_html(md_text):
     return html
 
 def run_pipeline():
-    print(f"\n🚀 [자동화 엔진] 작업을 시작합니다: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print(f"\n[Automation Engine] Task Started: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     
     # 1. 뉴스 및 데이터 로드
     combined_text, _ = load_anchor_data()
     news_text, _, _ = fetch_news_data()
     
     # 2. 주제 선정
-    print("[1/6] 주제 분석 및 선정 중...")
+    print("[1/6] Analyzing and selecting topics...")
     topics = call_llama_for_topics(combined_text, news_text)
-    all_topics = topics.get("exam_topics", []) + topics.get("field_topics", [])
+    all_topics = topics.get("exam", []) + topics.get("field", [])
     if not all_topics:
-        print("❌ 선정된 주제가 없습니다.")
+        print("ERROR: No topics selected.")
         return False
         
     selected_topic = random.choice(all_topics)
     topic_only = re.sub(r"^\(.*?\)\s*", "", selected_topic).strip()
-    print(f"📌 선정된 주제: {topic_only}")
+    print(f"Selected Topic: {topic_only}")
 
     # 3. 초안 작성
-    print("[2/6] 기술 초안 작성 중...")
+    print("[2/6] Generating technical draft...")
     draft = generate_draft(topic_only, combined_text, "", "")
     
     # 4. 병렬 비판
-    print("[3/6] 교차 비판 중...")
+    print("[3/6] Cross-critiquing (Parallel)...")
     crit_q = critique_with_qwen(draft, topic_only)
     crit_m = critique_with_mistral_small(draft, topic_only)
     combined_crit = f"【Qwen】\n{crit_q}\n\n【Mistral】\n{crit_m}"
 
     # 5. 이미지 생성
-    print("[4/6] AI 이미지 생성 중...")
+    print("[4/6] Generating AI illustrations...")
     image_prompts = re.findall(r'\[IMAGE_PROMPT:\s*(.*?)\]', combined_crit, re.DOTALL)
     image_paths = []
     for idx, p in enumerate(image_prompts[:2]):
@@ -102,11 +102,11 @@ def run_pipeline():
             image_paths.append(path)
 
     # 6. 최종 수정 및 발행
-    print("[5/6] 최종 포스팅 작성 중...")
+    print("[5/6] Finalizing blog post...")
     final_text = revise_with_deepseek(draft, combined_crit, topic_only, image_paths=image_paths)
     seo_data = generate_seo_metadata(topic_only, final_text)
     
-    print("[6/6] 구글 블로그 발행 중...")
+    print("[6/6] Publishing to Google Blogger...")
     html_content = md_to_html(final_text)
     seo_tags = seo_data.get("seo_tags", []) if seo_data else []
     
@@ -114,23 +114,23 @@ def run_pipeline():
     result = pub.publish(title=topic_only, html_content=html_content, tags=seo_tags)
     
     if result["success"]:
-        print(f"✅ 발행 완료! {result.get('url', '')}")
+        print(f"SUCCESS: Published! {result.get('url', '')}")
         return True
     else:
-        print(f"❌ 발행 실패: {result.get('message', 'Unknown error')}")
+        print(f"FAILED: {result.get('message', 'Unknown error')}")
         return False
 
 if __name__ == "__main__":
     status = load_status()
     
     if not status.get("enabled"):
-        print("⏸️ [안내] 자동화 스위치가 꺼져 있습니다. 작업을 중단합니다.")
+        print("[Notice] Automation switch is OFF. Stopping task.")
         exit(0)
         
     now = time.time()
     if now < status.get("next_run", 0):
         remaining = int((status["next_run"] - now) / 60)
-        print(f"⏳ [대기] 다음 실행까지 약 {remaining}분 남았습니다.")
+        print(f"[Wait] Approx. {remaining} minutes left until next run.")
         exit(0)
 
     # 실행!
@@ -142,4 +142,4 @@ if __name__ == "__main__":
         status["last_run"] = time.time()
         status["next_run"] = time.time() + interval
         save_status(status)
-        print(f"⏰ 다음 예정 시각: {datetime.fromtimestamp(status['next_run']).strftime('%Y-%m-%d %H:%M:%S')}")
+        print(f"Next Run Scheduled: {datetime.fromtimestamp(status['next_run']).strftime('%Y-%m-%d %H:%M:%S')}")
