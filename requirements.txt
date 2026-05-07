@@ -4,6 +4,10 @@ beautifulsoup4
 openai
 python-dotenv
 litellm
+google-auth
 google-auth-oauthlib
+google-auth-httplib2
 google-api-python-client
 python-docx
+Pillow
+markdown

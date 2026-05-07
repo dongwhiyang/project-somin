@@ -135,32 +135,17 @@ footer { visibility: hidden; }
 
 
 # ─────────────────────────────────────────────
-# 데이터 로딩 함수들
+# 데이터 로딩 캐시 함수들
 # ─────────────────────────────────────────────
-@st.cache_data(show_spinner=False, ttl=300)
-def load_anchor_data():
-    anchor_dir = Path("anchor_data")
-    if not anchor_dir.exists():
-        return "", 0
-    txt_files = sorted(anchor_dir.glob("*.txt"))
-    all_texts = []
-    for f in txt_files:
-        try:
-            content = f.read_text(encoding="utf-8")
-            if len(content.strip()) > 60:
-                all_texts.append(f"[파일: {f.name}]\n{content[:2000]}")
-        except Exception:
-            pass
-    return "\n\n---\n\n".join(all_texts), len(txt_files)
+from scraper import load_anchor_data, fetch_news_data
 
+@st.cache_data(show_spinner=False, ttl=300)
+def get_cached_anchor():
+    return load_anchor_data()
 
 @st.cache_data(show_spinner=False, ttl=3600)
-def fetch_news_data():
-    """실무 키워드 풀에서 랜덤 3개로 구글 뉴스 RSS 수집"""
-    news_dict = scrape_all_keywords(n_random=3)
-    formatted = format_news_for_prompt(news_dict)
-    total = sum(len(v) for v in news_dict.values())
-    return formatted, total, list(news_dict.keys())
+def get_cached_news():
+    return fetch_news_data()
 
 
 def md_to_html(md_text):
@@ -290,14 +275,14 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ─── 데이터 로드 ───
-combined_text, file_count = load_anchor_data()
+combined_text, file_count = get_cached_anchor()
 
 if file_count == 0:
     st.error("⚠️ `anchor_data` 폴더에 텍스트 파일이 없습니다. 먼저 `extract_pdfs.py`를 실행해 주세요.")
     st.stop()
 
 with st.spinner("📡 최신 실무 뉴스를 수집하고 있습니다..."):
-    news_text, news_count, selected_kws = fetch_news_data()
+    news_text, news_count, selected_kws = get_cached_news()
 
 # 통계 바
 st.markdown(f"""

@@ -34,8 +34,23 @@ def load_status():
     return {"enabled": False, "last_run": 0, "next_run": 0}
 
 def save_status(status):
+    # 1. 로컬 저장
     with open(STATUS_FILE, "w") as f:
-        json.dump(status, f)
+        json.dump(status, f, indent=2)
+    # 2. 깃허브 동기화
+    token = os.getenv("GITHUB_TOKEN", "")
+    if token:
+        try:
+            import requests, base64
+            repo = "dongwhiyang/project-somin"
+            url = f"https://api.github.com/repos/{repo}/contents/{STATUS_FILE}"
+            headers = {"Authorization": f"token {token}", "Accept": "application/vnd.github.v3+json"}
+            get_resp = requests.get(url, headers=headers)
+            sha = get_resp.json().get("sha", "") if get_resp.status_code == 200 else ""
+            content = json.dumps(status, indent=2).encode("utf-8")
+            b64_content = base64.b64encode(content).decode("utf-8")
+            requests.put(url, headers=headers, json={"message": "Auto Pilot Sync", "content": b64_content, "sha": sha})
+        except: pass
 
 def md_to_html(md_text):
     import re
@@ -52,7 +67,7 @@ def run_pipeline():
     
     # 1. 뉴스 및 데이터 로드
     combined_text, _ = load_anchor_data()
-    news_text = fetch_news_data()
+    news_text, _, _ = fetch_news_data()
     
     # 2. 주제 선정
     print("[1/6] 주제 분석 및 선정 중...")
@@ -89,7 +104,7 @@ def run_pipeline():
     html_content = md_to_html(final_text)
     seo_tags = seo_data.get("seo_tags", []) if seo_data else []
     
-    pub = BloggerPublisher(headless=True)
+    pub = BloggerPublisher()
     result = pub.publish(title=topic_only, html_content=html_content, tags=seo_tags)
     
     if result["success"]:
