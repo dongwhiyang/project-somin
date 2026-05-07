@@ -194,12 +194,31 @@ if st.session_state.phase == 0:
 
     st.subheader("📍 Phase 1. 스마트 주제 선정")
     
-    if st.button("🔍 최신 건설 뉴스 분석 및 주제 제안", use_container_width=True, disabled=btn_disabled):
-        with st.spinner("최신 뉴스 검색 및 기출문제 분석 중..."):
-            news_text = fetch_news_data()
-            topics_data = call_llama_for_topics(combined_text, news_text)
-            st.session_state.topics_data = topics_data
-            st.rerun()
+    col_one1, col_one2 = st.columns(2)
+    with col_one1:
+        if st.button("🔍 최신 뉴스 분석 & 주제 제안", use_container_width=True, disabled=btn_disabled):
+            with st.spinner("최신 뉴스 검색 및 기출문제 분석 중..."):
+                news_text = fetch_news_data()
+                topics_data = call_llama_for_topics(combined_text, news_text)
+                st.session_state.topics_data = topics_data
+                st.rerun()
+    
+    with col_one2:
+        if st.button("🚀 즉시 자동 선정 및 원스톱 발행", use_container_width=True, type="primary", disabled=btn_disabled):
+            with st.spinner("AI가 주제를 스스로 선정하여 바로 발행을 시작합니다..."):
+                # 1. 뉴스 분석 및 주제 생성
+                news_text = fetch_news_data()
+                topics_data = call_llama_for_topics(combined_text, news_text)
+                
+                # 2. 주제 자동 선택 (첫 번째 수험 주제)
+                all_topics = topics_data.get("exam_topics", []) + topics_data.get("field_topics", [])
+                if all_topics:
+                    st.session_state.selected_topic = all_topics[0]
+                    st.session_state.phase = 1
+                    st.session_state.auto_mode = True # 발행까지 자동 진행
+                    st.rerun()
+                else:
+                    st.error("주제를 생성하지 못했습니다. 다시 시도해 주세요.")
 
     if st.session_state.topics_data:
         data = st.session_state.topics_data
