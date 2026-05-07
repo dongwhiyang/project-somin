@@ -6,6 +6,29 @@
 import random
 import requests
 from bs4 import BeautifulSoup
+from pathlib import Path
+
+def load_anchor_data():
+    anchor_dir = Path("anchor_data")
+    if not anchor_dir.exists():
+        return "", 0
+    txt_files = sorted(anchor_dir.glob("*.txt"))
+    all_texts = []
+    for f in txt_files:
+        try:
+            content = f.read_text(encoding="utf-8")
+            if len(content.strip()) > 60:
+                all_texts.append(f"[파일: {f.name}]\n{content[:2000]}")
+        except Exception:
+            pass
+    return "\n\n---\n\n".join(all_texts), len(txt_files)
+
+def fetch_news_data():
+    """실무 키워드 중 랜덤 3개로 구글 뉴스 RSS 수집"""
+    news_dict = scrape_all_keywords(n_random=3)
+    formatted = format_news_for_prompt(news_dict)
+    total = sum(len(v) for v in news_dict.values())
+    return formatted
 
 # ─────────────────────────────────────────────
 # 실무 키워드 풀 (Pool)
