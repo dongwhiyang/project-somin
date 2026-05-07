@@ -574,7 +574,7 @@ if st.session_state.phase == 1:
                     blog_id = st.secrets["BLOGGER_BLOG_ID"]
 
                 if blog_id:
-                    pub = BloggerPublisher(headless=True)
+                    pub = BloggerPublisher()
                     pub_result = pub.publish(title=topic_only, html_content=html_content, tags=seo_tags)
                     if pub_result["success"]:
                         st.success(f"🎊 블로그 자동 발행 성공! {pub_result['message']}")
@@ -677,24 +677,16 @@ if st.session_state.phase == 2:
             st.warning("⚠️ 환경 변수 또는 Streamlit Secrets에 BLOGGER_BLOG_ID를 설정하세요")
 
         if st.button("🚀 구글 블로그 자동 발행", use_container_width=True, disabled=not can_publish):
-            status_ph = st.empty()
-            pb = st.progress(0)
-            steps = ["브라우저 준비", "Blogger 접속", "새 글 작성", "제목 입력", "HTML 전환", "본문 입력", "발행 완료"]
-            idx = [0]
-
-            def upd(msg):
-                status_ph.info(msg)
-                if idx[0] < len(steps):
-                    pb.progress((idx[0] + 1) / len(steps))
-                    idx[0] += 1
-
-            pub = BloggerPublisher(headless=False, status_callback=upd)
-            result = pub.publish(title=topic_short, html_content=html_content, tags=seo_tags)
-            pb.progress(1.0)
-            if result["success"]:
-                st.success(result["message"])
-            else:
-                st.error(result["message"])
+            with st.spinner("Blogger API를 통해 안전하게 발행 중..."):
+                try:
+                    pub = BloggerPublisher()
+                    result = pub.publish(title=topic_short, html_content=html_content, tags=seo_tags)
+                    if result["success"]:
+                        st.success(f"✅ {result['message']}")
+                    else:
+                        st.error(f"❌ 발행 실패: {result['message']}")
+                except Exception as e:
+                    st.error(f"❌ 시스템 오류: {e}")
 
     with col_d3:
         with st.expander("💻 HTML 코드 복사", expanded=False):
