@@ -15,7 +15,7 @@ from pipeline import (
     analyze_competitors_with_deepseek, generate_draft, critique_with_qwen, critique_with_mistral_small,
     generate_image_from_nvidia,
     revise_with_deepseek, tune_with_mistral, generate_seo_metadata, create_docx,
-    auto_pick_topic,
+    auto_pick_topic, call_llama_for_topics
 )
 from tistory_publisher import TistoryPublisher
 from blogger_publisher import BloggerPublisher
@@ -174,71 +174,6 @@ def md_to_html(md_text):
         
     return html
 
-# ─────────────────────────────────────────────
-# 주제 생성: NVIDIA Llama 3 70B 사용
-# ─────────────────────────────────────────────
-def call_llama_for_topics(anchor_text: str, news_text: str) -> dict:
-    """
-    NVIDIA Llama 3 70B 모델로 수험 4개 + 실무 2개, 총 6개 주제 생성.
-    반환: {"exam": ["주제1",...], "field": ["주제5","주제6"]}
-    """
-    from litellm import completion
-
-    system_prompt = """Role: 너는 10년 차 파워블로거이자, 건설사 공무 출신으로 현재 토목건설 계약 및 감독 업무를 총괄하는 현직 공무원이야.
-Goal: 제공된 기출문제 데이터와 웹 스크래핑 뉴스를 조합해서, 수험생과 실무자 모두의 이목을 끌 수 있는 아주 흥미롭고 실용적인 블로그 주제 6개를 제안해 줘.
-
-규칙:
-1. "exam" 키: 기출문제 기반 수험 정보 주제 4개 (토목기사/토목시공기술사/토질및기초기술사 중 하나를 앞에 태그)
-2. "field" 키: 최신 실무 뉴스 기반 현장 가이드 주제 2개 (실무 태그 붙임)
-3. 각 주제는 블로그 제목으로 쓸 수 있을 정도로 구체적이고 매력적이어야 함
-4. 반드시 아래 JSON 형식으로만 응답 (다른 텍스트 금지):
-
-{
-  "exam": [
-    "(토목기사) 주제1",
-    "(토목시공기술사) 주제2",
-    "(토질및기초기술사) 주제3",
-    "(토목기사) 주제4"
-  ],
-  "field": [
-    "(실무가이드) 주제5",
-    "(실무가이드) 주제6"
-  ]
-}"""
-
-    user_prompt = f"""【기출문제 데이터】\n{anchor_text[:6000]}\n\n【최신 실무 뉴스 헤드라인】\n{news_text[:2000]}\n\n위 데이터를 종합해서 수험 주제 4개 + 실무 주제 2개를 JSON으로 응답하세요."""
-
-    kwargs = {
-        "model": "openai/meta/llama-3.1-70b-instruct",
-        "api_base": "https://integrate.api.nvidia.com/v1",
-        "api_key": os.getenv("NVIDIA_API_KEY", ""),
-        "messages": [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_prompt},
-        ],
-        "temperature": 0.8,
-        "max_tokens": 1500,
-    }
-
-    response = completion(**kwargs)
-    raw = response.choices[0].message.content.strip()
-    
-    # JSON 추출 (코드블록 제거)
-    match = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", raw, re.DOTALL)
-    if match:
-        raw = match.group(1)
-    else:
-        start, end = raw.find("{"), raw.rfind("}")
-        if start != -1 and end != -1:
-            raw = raw[start:end + 1]
-
-    parsed = json.loads(raw.strip())
-    # 최소 보장
-    if "exam" not in parsed:
-        parsed["exam"] = []
-    if "field" not in parsed:
-        parsed["field"] = []
-    return parsed
 
 
 # ─────────────────────────────────────────────
