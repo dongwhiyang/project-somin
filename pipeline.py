@@ -211,7 +211,7 @@ def auto_pick_topic(topics_data: dict) -> str:
     
     client = _deepseek_client()
     response = client.chat.completions.create(
-        model="deepseek-v4-pro",
+        model="deepseek-v4-flash",
         messages=[
             {"role": "system", "content": "너는 20년 경력의 베테랑 토목공학 기술자이자 파워 블로거야. 아래 제안된 6개의 블로그 주제 후보 중, 현재 건설 트렌드와 독자들의 관심도를 고려했을 때 가장 '조회수가 높고 유익할 것 같은' 주제를 딱 하나만 골라줘. 반드시 주제 명칭만 그대로 응답해."},
             {"role": "user", "content": f"주제 후보 목록:\n{topics_list_str}"},
@@ -538,7 +538,7 @@ def generate_seo_metadata(topic: str, final_text: str) -> dict:
     """SEO 태그 5개, 메타 설명, 이미지 Alt Text 3개를 생성합니다."""
     client = _deepseek_client()
     response = client.chat.completions.create(
-        model="deepseek-v4-pro",
+        model="deepseek-v4-flash",
         messages=[
             {"role": "system", "content": """블로그 SEO 전문가입니다. 반드시 아래 JSON 형식으로만 응답하세요.
 
