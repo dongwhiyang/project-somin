@@ -184,7 +184,7 @@ def analyze_competitors_with_deepseek(topic: str, competitor_texts: list[str]) -
     combined_text = "\n\n---\n\n".join(competitor_texts)
     
     response = client.chat.completions.create(
-        model="deepseek-v4-pro",
+        model="deepseek-v4-flash",
         messages=[
             {"role": "system", "content": """Role: 너는 최고의 SEO 및 블로그 마케팅 전문가야.
 Goal: 주어진 상위 노출 경쟁 블로그 글들을 분석하여, 우리가 작성할 새로운 글이 이들을 압도할 수 있도록 벤치마킹 전략(장점 흡수, 단점 보완)을 3~4줄로 요약해 줘.
@@ -232,7 +232,7 @@ def generate_draft(topic: str, anchor_text: str, gov_data: str = "", competitor_
     comp_section = f"\n\n【4. 경쟁 블로그 분석 및 벤치마킹 전략】\n{competitor_analysis}" if competitor_analysis else ""
     
     response = client.chat.completions.create(
-        model="deepseek-v4-pro",
+        model="deepseek-v4-flash",
         messages=[
             {"role": "system", "content": """Role: 너는 스타 칼럼니스트야.
 Goal: 선택된 주제와 API 데이터, 그리고 경쟁사 분석 데이터를 바탕으로 상위 노출을 싹쓸이할 전문적인 기술 칼럼 초안을 작성해 줘.
@@ -321,7 +321,7 @@ def revise_with_deepseek(draft: str, critique: str, topic: str, image_paths: lis
         img_info = "\n\n(참고: 현재 사용 가능한 이미지 파일이 없습니다.)"
 
     response = client.chat.completions.create(
-        model="deepseek-v4-pro",
+        model="deepseek-v4-flash",
         messages=[
             {"role": "system", "content": """Role: 너는 스타 IT/기술 블로거이자 전문 에디터야.
 Goal: 제공된 초안과 비판 내용을 바탕으로 완성형 블로그 포스팅을 작성해 줘.
