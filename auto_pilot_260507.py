@@ -55,53 +55,29 @@ def save_status(status):
             pass
 
 def md_to_html(md_text):
+    import markdown
     import re
-
-    # 1. 마크다운 표를 HTML 표로 강제 변환 (초강력 버전)
-    def parse_md_table(match):
-        table_text = match.group(0).strip()
-        rows = table_text.split('\n')
-        if len(rows) < 2: return match.group(0)
-        
-        html = '<div style="overflow-x:auto; margin: 20px 0;"><table style="border-collapse: collapse; width: 100%; border: 1px solid #ddd; font-family: sans-serif;">'
-        
-        for i, row in enumerate(rows):
-            if i == 1 and ('---' in row or '===' in row): continue
-            
-            cells = [c.strip() for c in row.split('|')]
-            if cells and not cells[0]: cells.pop(0)
-            if cells and not cells[-1]: cells.pop()
-            
-            if not cells: continue
-            
-            tag = 'th' if i == 0 else 'td'
-            if i == 0:
-                style = 'border: 1px solid #ddd; padding: 12px 15px; background-color: #667eea; color: white; text-align: center; font-weight: bold;'
-            else:
-                bg = 'background-color: #f8f9fa;' if i % 2 == 0 else 'background-color: #ffffff;'
-                style = f'border: 1px solid #ddd; padding: 12px 15px; {bg}'
-            
-            html += '<tr>'
-            for cell in cells:
-                html += f'<{tag} style="{style}">{cell}</{tag}>'
-            html += '</tr>'
-            
-        html += '</table></div>'
-        return html
-
-    # 표 패턴: | 로 시작해서 | 로 끝나는 행이 연속되는 모든 구간 (MULTILINE 필수)
-    table_pattern = r'((?:^\s*\|.*\|[ \t]*$(?:\n|$))+)'
-    html_output = re.sub(table_pattern, parse_md_table, md_text, flags=re.MULTILINE)
-
-    # 2. 기타 마크다운 기본 변환
-    html_output = re.sub(r'\*\*(.*?)\*\*', r'<b>\1</b>', html_output)
-    html_output = re.sub(r'^### (.*?)$', r'<h3 style="border-left: 5px solid #667eea; padding-left:10px; color:#1a1a3e;">\1</h3>', html_output, flags=re.MULTILINE)
-    html_output = re.sub(r'^## (.*?)$', r'<h2 style="background:#f8f9fa; padding:10px; border-radius:5px;">\1</h2>', html_output, flags=re.MULTILINE)
-    html_output = re.sub(r'!\[(.*?)\]\((.*?)\)', r'<img src="\2" alt="\1" style="max-width:100%; height:auto;"><br>', html_output)
     
-    html_output = html_output.replace('\n', '<br />')
+    # 마크다운 표 인식률을 높이기 위해 표(|) 시작 전후에 빈 줄 강제 삽입
+    # (제목이나 본문 바로 다음에 표가 붙어 있으면 인식이 안 되는 문제 해결)
+    md_text = re.sub(r'([^\n])\n\|', r'\1\n\n|', md_text)
     
-    return html_output
+    # 표 스타일을 위한 CSS (Blogger 호환성을 위해 상단에 배치)
+    style = """
+    <style>
+        .post-body table { border-collapse: collapse !important; width: 100% !important; margin: 20px 0 !important; font-family: sans-serif !important; min-width: 400px !important; border: 1px solid #ddd !important; }
+        .post-body th { background-color: #667eea !important; color: #ffffff !important; text-align: left !important; padding: 12px 15px !important; border: 1px solid #ddd !important; }
+        .post-body td { padding: 12px 15px !important; border: 1px solid #ddd !important; border-bottom: 1px solid #dddddd !important; }
+        .post-body tr:nth-of-type(even) { background-color: #f3f3f3 !important; }
+        .post-body tr:last-of-type { border-bottom: 2px solid #667eea !important; }
+        .post-body tr:hover { background-color: #f5f5f5 !important; transition: 0.3s !important; }
+    </style>
+    """
+    
+    # 마크다운 -> HTML 변환 (표 확장 기능 활성화)
+    html_body = markdown.markdown(md_text, extensions=['tables', 'nl2br'])
+    
+    return style + html_body
 
 def run_pipeline():
     print(f"\n[Automation Engine] Task Started: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
