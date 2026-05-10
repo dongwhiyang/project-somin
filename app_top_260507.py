@@ -348,7 +348,7 @@ def call_llm_for_topics(text_data: str, web_trends: str = "", model_choice: str 
             api_key=DEEPSEEK_API_KEY,
             base_url="https://api.deepseek.com",
         )
-        model_name = "deepseek-v4-pro"
+        model_name = "deepseek-v4-flash"
     else:  # Gemma 4 E4b (로컬 LLM)
         client = OpenAI(
             api_key="lm-studio",  # 로컬 서버는 키 검증을 하지 않음

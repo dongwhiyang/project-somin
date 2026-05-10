@@ -2,6 +2,7 @@ import os
 import json
 import re
 import random
+import concurrent.futures
 import streamlit as st
 import requests
 from pathlib import Path
@@ -11,7 +12,7 @@ from dotenv import load_dotenv
 from scraper import scrape_all_keywords, format_news_for_prompt, scrape_competitor_blogs
 from pipeline import (
     TUNING_MODELS, check_api_key, collect_gov_data,
-    analyze_competitors_with_deepseek, generate_draft, critique_with_qwen,
+    analyze_competitors_with_deepseek, generate_draft, critique_with_qwen, critique_with_mistral_small,
     generate_image_from_nvidia,
     revise_with_deepseek, tune_with_mistral, generate_seo_metadata, create_docx,
     auto_pick_topic, call_llama_for_topics
@@ -258,7 +259,9 @@ if st.session_state.selected_topic:
             st.session_state.draft_text = draft
 
             status.update(label="Critiquing...")
-            combined_crit = critique_with_qwen(draft, topic["title"])
+            q_crit = critique_with_qwen(draft)
+            m_crit = critique_with_mistral_small(draft)
+            combined_crit = f"Qwen: {q_crit}\nMistral: {m_crit}"
             st.session_state.combined_critique = combined_crit
 
             status.update(label="Revising...")
