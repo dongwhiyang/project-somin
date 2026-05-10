@@ -2,7 +2,6 @@ import os
 import json
 import re
 import random
-import concurrent.futures
 import streamlit as st
 import requests
 from pathlib import Path
@@ -12,7 +11,7 @@ from dotenv import load_dotenv
 from scraper import scrape_all_keywords, format_news_for_prompt, scrape_competitor_blogs
 from pipeline import (
     TUNING_MODELS, check_api_key, collect_gov_data,
-    analyze_competitors_with_deepseek, generate_draft, critique_with_qwen, critique_with_mistral_small,
+    analyze_competitors_with_deepseek, generate_draft, critique_with_qwen,
     generate_image_from_nvidia,
     revise_with_deepseek, tune_with_mistral, generate_seo_metadata, create_docx,
     auto_pick_topic, call_llama_for_topics
@@ -453,28 +452,16 @@ if st.session_state.phase == 1:
             st.error(f"초안 작성 오류: {e}")
             st.stop()
 
-        # ── 3단계: Qwen + Mistral Small 병렬 비판 ──
-        st.write("🔍 [2/5] Qwen & Mistral Small 교차 비판 중 (병렬)...")
-        with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
-            fut_q = executor.submit(critique_with_qwen, draft, topic_only)
-            fut_m = executor.submit(critique_with_mistral_small, draft, topic_only)
-            try:
-                critique_q = fut_q.result()
-            except Exception as e:
-                critique_q = f"[Qwen 비판 실패] {e}"
-            try:
-                critique_m = fut_m.result()
-            except Exception as e:
-                critique_m = f"[Mistral Small 비판 실패] {e}"
-
-        combined_crit = (
-            f"【팩트/논리 비판 (Qwen 2.5 72B)】\n{critique_q}"
-            f"\n\n---\n\n【구조/가독성 비판 (Mistral Small)】\n{critique_m}"
-        )
+        # ── 3단계: Llama 3.1 70B 단일 비판 ──
+        st.write("🔍 [2/5] Llama 3.1 70B 기술·현장·구조 비판 중...")
+        try:
+            combined_crit = critique_with_qwen(draft, topic_only)
+        except Exception as e:
+            combined_crit = f"[Llama 70B 비판 실패] {e}"
         st.session_state.combined_critique = combined_crit
 
         # ── 4단계: 이미지 자동 생성 ──
-        st.write("🎨 [3/5] AI가 블로그용 삽화를 생성하는 중 (NVIDIA SDXL)...")
+        st.write("🎨 [3/5] AI가 블로그용 삽화를 생성하는 중 (Gemini 2.5 Flash Image)...")
         image_prompts = re.findall(r'\[IMAGE_PROMPT:\s*(.*?)\]', combined_crit, re.DOTALL)
         image_paths = []
         for idx, prompt in enumerate(image_prompts[:3]):
@@ -553,7 +540,7 @@ if st.session_state.phase == 2:
     with st.expander("📝 1단계 — DeepSeek 초안 (원본)", expanded=False):
         st.markdown(st.session_state.draft_text or "_초안 없음_")
 
-    with st.expander("🔍 2단계 — Qwen + Mistral Small 교차 비판", expanded=False):
+    with st.expander("🔍 2단계 — Llama 3.1 70B 기술 비판", expanded=False):
         st.markdown(st.session_state.combined_critique or "_비판 데이터 없음_")
 
     with st.expander("🤖 3단계 — DeepSeek 최종 수정본", expanded=False):

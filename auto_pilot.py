@@ -13,7 +13,6 @@ from pipeline import (
     call_llama_for_topics,
     generate_draft,
     critique_with_qwen,
-    critique_with_mistral_small,
     generate_image_from_nvidia,
     revise_with_deepseek,
     generate_seo_metadata
@@ -127,10 +126,8 @@ def run_pipeline():
     draft = generate_draft(topic_only, combined_text, "", "")
     
     # 4. 병렬 비판
-    print("[3/6] Cross-critiquing (Parallel)...")
-    crit_q = critique_with_qwen(draft, topic_only)
-    crit_m = critique_with_mistral_small(draft, topic_only)
-    combined_crit = f"【Qwen】\n{crit_q}\n\n【Mistral】\n{crit_m}"
+    print("[3/6] Llama 3.1 70B critique...")
+    combined_crit = critique_with_qwen(draft, topic_only)
 
     # 5. 이미지 생성
     print("[4/6] Generating AI illustrations...")
