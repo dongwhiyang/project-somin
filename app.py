@@ -17,7 +17,6 @@ from pipeline import (
     revise_with_deepseek, tune_with_mistral, generate_seo_metadata, create_docx,
     auto_pick_topic, call_llama_for_topics
 )
-from tistory_publisher import TistoryPublisher
 from blogger_publisher import BloggerPublisher
 import base64
 

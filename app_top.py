@@ -11,7 +11,6 @@ from pipeline import (
     generate_draft, critique_with_gemini, revise_draft,
     tune_with_model, generate_seo_metadata, create_docx,
 )
-from tistory_publisher import TistoryPublisher
 
 # ─────────────────────────────────────────────
 # 환경변수 로드 (.env 파일에서 API 키를 읽어옵니다)
