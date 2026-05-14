@@ -577,7 +577,8 @@ def generate_seo_metadata(topic: str, final_text: str) -> dict:
         print(f"JSON Parsing failed: {e}")
         return {
             "seo_tags": [topic[:10], "건설", "실무", "기술사"],
-            "meta_description": f"{topic}에 대한 전문 기술 가이드입니다.",
+            "meta_description": f"{topic} — 건설/토목 전문 기술 가이드. 실무자와 수험생을 위한 깊이 있는 분석.",
+            "url_slug": re.sub(r'[^a-zA-Z0-9]+', '-', topic)[:50].lower().strip('-'),
             "image_alt_texts": ["관련 이미지"]
         }
 
